@@ -1,0 +1,160 @@
+{% extends "layout.html" %}
+{% block content %}
+    <!-- Page Heading -->
+    <h1 class="h3 mb-4 text-gray-800">Labels</h1>
+
+    <div class="row">
+
+        <div class="col-lg-4">
+            <div class="card tilebox-one">
+                <div class="card-body">
+                    <i class="fas fa-user-friends float-right"></i>
+                    <h6 class="text-uppercase mt-0">All Labels</h6>
+                    <h2 class="my-2">{{ summary.all }}</h2>
+                </div> <!-- end card-body-->
+            </div>
+            <!--end card-->
+        </div>
+        <!--end card col-->
+
+        <div class="col-lg-4">
+            <div class="card tilebox-one">
+                <div class="card-body">
+                    <i class="fas fa-user-friends float-right"></i>
+                    <h6 class="text-uppercase mt-0">Active Labels</h6>
+                    <h2 class="my-2">{{ summary.active }}</h2>
+                </div> <!-- end card-body-->
+            </div>
+            <!--end card-->
+        </div>
+        <!--end card col-->
+
+        <div class="col-lg-4">
+            <div class="card tilebox-one">
+                <div class="card-body">
+                    <i class="fas fa-user-friends float-right"></i>
+                    <h6 class="text-uppercase mt-0">De-Activated Labels</h6>
+                    <h2 class="my-2">{{ summary.inactive }}</h2>
+                </div> <!-- end card-body-->
+            </div>
+            <!--end card-->
+        </div>
+        <!--end card col-->
+
+    </div> <!--- /.end cards row -->
+
+    <div class="row">
+        <div class="col-12">
+
+            <div class="card">
+                <div class="card-body">
+
+                    <div class="row mb-2">
+                        <div class="col-sm-4">
+                            <button 
+                                type="button" 
+                                class="btn btn-danger mb-2"
+                                data-toggle="modal" 
+                                data-target="#label-modal"
+                            >
+                                <i class="fas fa-plus-circle mr-2"></i> Add Label
+                            </button>
+                        </div>
+                    </div> <!-- end row-->
+
+                    <div class="table-responsive">
+                        <table class="table table-centered w-100 dt-responsive nowrap" id="targets-datatable">
+                            <thead class="thead-light">
+                                <tr>
+                                    <th>Job Name</th>
+                                    <th>Label</th>
+                                    <th>Create Date</th>
+                                    <th>Status</th>
+                                    <th style="width: 75px;">Action</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% if labels %}
+                                    {% for label in labels %}
+                                        <tr>
+                                            <td>
+                                                {{ label.job.job_name }}
+                                            </td>
+                                            <td>
+                                                {{ label.label_key }}
+                                            </td>
+                                            <td>
+                                                {{ label.created_at }}
+                                            </td>
+                                            <td>
+                                                <span class="badge badge-success-lighten">Active</span>
+                                            </td>
+                                            <td>
+                                                <a 
+                                                    href="javascript:void(0);" 
+                                                    class="action-icon" 
+                                                    data-toggle="modal"  
+                                                    data-target="#full-width-modal"> <i class="fas fa-eye"></i></a>
+                                            </td>
+                                        </tr>
+                                    {% endfor %}
+                                {% else %}
+                                    <td>
+                                        <span>No labels found..</span>
+                                    </td>
+                                {% endif %}
+                            </tbody>
+                        </table>
+                    </div>
+
+                </div>
+            </div>
+
+        </div>
+    </div> <!--- /.end table row -->
+
+    <div id="label-modal" class="modal fade" tabindex="-1" role="dialog" aria-labelledby="label-modalLabel" aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h4 class="modal-title" id="label-modalLabel">Add New Label</h4>
+                    <button type="button" class="close" data-dismiss="modal" aria-hidden="true">×</button>
+                </div>
+                <div class="modal-body">
+                    
+                    <form class="pl-3 pr-3" method="POST" action="{{ url_for('labels') }}">
+
+                        <div class="form-group">
+                            <label for="job-select">Job Select</label>
+                            <select
+                                class="custom-select"
+                                id="job-select"
+                                required
+                                name="job_code"
+                            >
+                            {% if jobs %}
+                                {% for job in jobs %}
+                                    <option value="{{ job.job_code }}">{{ job.job_name }}</option>
+                                {% endfor %}
+                            {% else %}
+                                <option selected="selected" disabled>No jobs found..</option>
+                            {% endif %}
+                            </select>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="label-input" class="col-form-label">Label</label>
+                            <input type="text" name="label_key" class="form-control" id="label-input" placeholder="Label" required>
+                        </div>
+
+                        
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-light" data-dismiss="modal">Close</button>
+                        <button type="submit" class="btn btn-primary">Save changes</button>
+                    </div>
+                </form>
+            </div><!-- /.modal-content -->
+        </div><!-- /.modal-dialog -->
+    </div><!-- /.modal -->
+{% endblock content %}

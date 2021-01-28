@@ -1,0 +1,151 @@
+{% extends "layout.html" %}
+{% block content %}
+    <!-- Page Heading -->
+    <h1 class="h3 mb-4 text-gray-800">Targets</h1>
+
+    <div class="row">
+
+        <div class="col-lg-4">
+            <div class="card tilebox-one">
+                <div class="card-body">
+                    <i class="fas fa-user-friends float-right"></i>
+                    <h6 class="text-uppercase mt-0">All Targets</h6>
+                    <h2 class="my-2">{{ summary.all }}</h2>
+                </div> <!-- end card-body-->
+            </div>
+            <!--end card-->
+        </div>
+        <!--end card col-->
+
+        <div class="col-lg-4">
+            <div class="card tilebox-one">
+                <div class="card-body">
+                    <i class="fas fa-user-friends float-right"></i>
+                    <h6 class="text-uppercase mt-0">Active Targets</h6>
+                    <h2 class="my-2">{{ summary.active }}</h2>
+                </div> <!-- end card-body-->
+            </div>
+            <!--end card-->
+        </div>
+        <!--end card col-->
+
+        <div class="col-lg-4">
+            <div class="card tilebox-one">
+                <div class="card-body">
+                    <i class="fas fa-user-friends float-right"></i>
+                    <h6 class="text-uppercase mt-0">De-Activated Targets</h6>
+                    <h2 class="my-2">{{ summary.inactive }}</h2>
+                </div> <!-- end card-body-->
+            </div>
+            <!--end card-->
+        </div>
+        <!--end card col-->
+
+    </div> <!--- /.end cards row -->
+
+    <div class="row">
+        <div class="col-12">
+
+            <div class="card">
+                <div class="card-body">
+
+                    <div class="row mb-2">
+                        <div class="col-sm-4">
+                            <button 
+                                type="button" 
+                                class="btn btn-danger mb-2"
+                                data-toggle="modal" 
+                                data-target="#target-modal"
+                            >
+                                <i class="fas fa-plus-circle mr-2"></i> Add Target
+                            </button>
+                        </div>
+                    </div> <!-- end row-->
+
+                    <div class="table-responsive">
+                        <table class="table table-centered w-100 dt-responsive nowrap" id="targets-datatable">
+                            <thead class="thead-light">
+                                <tr>
+                                    <th>Target</th>
+                                    <th>Job Name</th>
+                                    <th>Create Date</th>
+                                    <th>Status</th>
+                                    <th style="width: 75px;">Action</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% if targets %}
+                                    {% for target in targets %}
+                                        <tr>
+                                            <td>
+                                                {{ target.target_name }}
+                                            </td>
+                                            <td>
+                                                {{ target.job.job_name }}
+                                            </td>
+                                            <td>
+                                                {{ target.created_at }}
+                                            </td>
+                                            <td>
+                                                <span class="badge badge-success-lighten">Active</span>
+                                            </td>
+                                            <td>
+                                                <a 
+                                                    href="javascript:void(0);" 
+                                                    class="action-icon" 
+                                                    data-toggle="modal"
+                                                    data-target="#full-width-modal"
+                                                > <i class="fas fa-eye"></i></a>
+                                            </td>
+                                        </tr>
+                                    {% endfor %}
+                                {% else %}
+                                    <td>
+                                        <span>No targets found..</span>
+                                    </td>  
+                                {% endif %}
+                            </tbody>
+                        </table>
+                    </div>
+
+                </div>
+            </div>
+
+        </div>
+    </div> <!--- /.end table row -->
+
+    <div id="target-modal" class="modal fade" tabindex="-1" role="dialog" aria-labelledby="target-modalLabel" aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h4 class="modal-title" id="target-modalLabel">Add New Target</h4>
+                    <button type="button" class="close" data-dismiss="modal" aria-hidden="true">×</button>
+                </div>
+                <div class="modal-body">
+                    
+                    <form class="pl-3 pr-3" method="POST" action="{{ url_for('targets') }}">
+
+                        <div class="form-group">
+                            <label for="job-select">Job Select</label>
+                            <select class="custom-select" id="job-select" name="job_code">
+                                {% if jobs %}
+                                    {% for job in jobs %}
+                                        <option value="{{ job.job_code }}">{{ job.job_name }}</option>
+                                    {% endfor %}
+                                {% else %}
+                                    <option selected="selected" disabled>No jobs found..</option>
+                                {% endif %}
+                            </select>
+                        </div>
+
+                        
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-light" data-dismiss="modal">Close</button>
+                        <button type="submit" class="btn btn-primary">Next</button>
+                    </div>
+                </form>
+            </div><!-- /.modal-content -->
+        </div><!-- /.modal-dialog -->
+    </div><!-- /.modal -->
+{% endblock content %}
