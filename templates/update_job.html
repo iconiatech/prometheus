@@ -1,0 +1,225 @@
+{% extends "layout.html" %}
+{% block content %}
+    <!-- Page Heading -->
+    <h1 class="h3 mb-4 text-gray-800">{{ title }} - <span class="text-warning">'{{ job.job_name }}'</span></h1>
+
+    <div class="row">
+        <div class="col-12">
+
+            <div class="card">
+                <div class="card-body">
+
+                    <div class="row">
+                        <div class="col-lg-6">
+                            <div class="row mb-2">
+                                <div class="col-sm-6">
+                                    <h4 class="header-title">{{ title }} --> '{{ job.job_name }}'</h4>                                </div>
+                                <div class="col-sm-6">
+                                    <div class="text-sm-right">
+                                        <button 
+                                            type="button" 
+                                            class="btn btn-warning mb-2 mr-1" 
+                                            data-toggle="modal" 
+                                            data-target="#deactivate-job-modal"
+                                        >
+                                            Deactivate Job
+                                        </button>
+                                        <button 
+                                            type="button" 
+                                            class="btn btn-danger mb-2" 
+                                            data-toggle="modal" 
+                                            data-target="#delete-job-modal"
+                                        >
+                                            Delete Job
+                                        </button>
+                                    </div>
+                                </div> <!-- end col-->
+                            </div> <!-- end row-->
+
+                            <form method="POST" action="{{url_for('update_job', job_code=job.job_code)}}">
+
+                                <div class="form-group">
+                                    <label for="exporter-select">Exporter Select</label>
+                                    <select 
+                                        data-toggle="select2" 
+                                        class="custom-select" 
+                                        id="exporter-select" 
+                                        name="exporter"
+                                        required
+                                    >
+                                        <option value="0">Select Exporter</option>
+                                        {% if exporters %}
+                                            {% for row in exporters %}
+                                                <option 
+                                                    value="{{ row.exporter_code }}"
+                                                    {% if row.exporter_code == job.exporter.exporter_code %}
+                                                        selected
+                                                    {% endif %}
+                                                >
+                                                    {{ row.exporter_description }}
+                                                </option>
+                                            {% endfor %}
+                                        {% endif %}
+                                    </select>
+                                </div>
+                                
+                                <div class="form-group">
+                                    <label for="job-name" class="col-form-label">Job Name</label>
+                                    <input 
+                                        type="text" 
+                                        name="job_name" 
+                                        class="form-control" 
+                                        id="job-name"
+                                        value="{{ job.job_name }}"
+                                        placeholder="Job Name" 
+                                        required
+                                    >
+                                </div>
+
+                                <div class="form-group">
+                                    <label for="scrape">Scrape Interval</label>
+                                    <input 
+                                        class="form-control" 
+                                        type="number" 
+                                        id="scrape"
+                                        name="scrape"
+                                        required 
+                                        placeholder="15s"
+                                        value="{{ job.scrape_interval }}"
+                                    >
+                                </div>
+
+                                <button type="submit" class="btn btn-warning mb-3 mr-2">Update Job</button>
+                                <a href="{{ url_for('jobs') }}" class="btn btn-dark mb-3">Back to home page</a>
+                            </form>
+    
+                        </div>
+
+                        <div class="col-lg-6">
+                            <div class="border p-3 mt-4 mt-lg-0 rounded">
+                                <h4 class="header-title">Job Labels</h4>
+
+                                <form action="#!" method="post">
+                                    <div class="row mt-2">
+                                        {% if labels %}
+                                            {% for label in labels %}
+                                                <div class="col-md-6">
+                                                    <div class="form-group">
+                                                        <label>{{ label.label_key }}</label>
+                                                        <input 
+                                                            type="text" 
+                                                            name="{{label.label_key}}" 
+                                                            class="form-control"
+                                                            value="{{ label.label_key }}"
+                                                            placeholder="Enter label key"
+                                                            required
+                                                        >
+                                                    </div>
+                                                </div>
+                                            {% endfor %}
+                                        {% endif %}
+                                    </div>
+
+                                    <button type="button" class="btn btn-info mt-2">
+                                        Update Labels
+                                    </button>
+                                </form>
+                            </div>
+                        </div>
+
+                    </div>
+
+                </div>
+            </div>
+
+        </div>
+    </div> <!---end row-->
+
+    <div class="row">
+        <div class="col-12">
+
+            <div class="card">
+                <div class="card-body">
+                    <h4 class="header-title mb-3">'{{ job.job_name }}' - Targets</h4>
+
+                    <div class="table-responsive">
+                        <table 
+                            class="table table-striped table-centered w-100 dt-responsive nowrap" 
+                            id="dataTable" 
+                            width="100%" 
+                            cellspacing="0"
+                        >
+                            <thead class="thead-dark">
+                                <tr>
+                                    <th>Target Name</th>
+                                    <th>Labels</th>
+                                    <th>Create Date</th>
+                                    <th>Status</th>
+                                    <th style="width: 75px;">Action</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for target in targets %}
+                                    <tr>
+                                        <td> {{ target.target_name }} </td>
+                                        <td> {{ target.labels|length }} </td>
+                                        <td> {{ target.created_at.strftime('%Y-%m-%d') }} </td>
+                                        <td>
+                                            <span class="badge badge-success-lighten">Active</span>
+                                        </td>
+                                        <td>
+                                            <a 
+                                                href="{{ url_for('update_target', target_code=target.target_code) }}" 
+                                                class="action-icon"
+                                            > 
+                                                <i class="fas fa-eye"></i>
+                                            </a>
+                                        </td>
+                                    </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+
+                </div>
+            </div>
+        </div>
+    </div> <!--end row-->
+
+    <div id="deactivate-job-modal" class="modal fade" tabindex="-1" role="dialog" aria-hidden="true">
+        <div class="modal-dialog modal-sm">
+            <div class="modal-content">
+                <div class="modal-body p-4">
+                    <div class="text-center">
+                        <i class="fas fa-minus-circle h1 text-warning"></i>
+                        <h4 class="mt-2">Deactivate Job?</h4>
+                        <p class="mt-3">
+                            If you deactivate a job, all the targets and labels associated with it are also deactivated. Press Continue if you are sure you want to proceed!
+                        </p>
+                        <form action="{{ url_for('delete_job', job_code=job.job_code) }}" method="get">
+                            <input type="submit" class="btn btn-warning my-2" value="Continue">
+                        </form>
+                    </div>
+                </div>
+            </div><!-- /.modal-content -->
+        </div><!-- /.modal-dialog -->
+    </div><!-- /.modal -->
+
+    <div id="delete-job-modal" class="modal fade" tabindex="-1" role="dialog" aria-hidden="true">
+        <div class="modal-dialog modal-sm">
+            <div class="modal-content modal-filled bg-danger">
+                <div class="modal-body p-4">
+                    <div class="text-center">
+                        <i class="far fa-trash-alt h1"></i>
+                        <h4 class="mt-2">Delete Job?</h4>
+                        <p class="mt-3">This action is irreversable! Deleting a job will also delete its associated targets and labels. Press continue if you are sure!</p>
+                        <form action="{{ url_for('delete_job', job_code=job.job_code) }}" method="post">
+                            <input type="submit" class="btn btn-light my-2" value="Continue">
+                        </form>
+                    </div>
+                </div>
+            </div><!-- /.modal-content -->
+        </div><!-- /.modal-dialog -->
+    </div><!-- /.modal -->
+
+{% endblock content %}
