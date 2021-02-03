@@ -95,12 +95,16 @@ class Target(db.Model):
 
 
 @app.route("/")
-@app.route("/home")
+@app.route("/home", methods=["GET"])
 def index():
+    """
 
-    jobs = Job.query.filter_by(status=1).all()
-    labels = Label.query.filter_by(status=1).all()
-    targets = Target.query.filter_by(status=1).all()
+    """
+
+    jobs = Job.query.filter_by(status=1, deleted=0).all()
+    labels = Label.query.filter_by(status=1, deleted=0).all()
+    targets = Target.query.filter_by(status=1, deleted=0).all()
+
     summary = {
         "jobs": len(jobs),
         "labels": len(labels),
@@ -108,7 +112,173 @@ def index():
     }
 
     return render_template(
-        "home.html", title="Home", summary=summary)
+        "home.html",
+        title="Home",
+        targets=targets,
+        summary=summary,)
+
+@app.route("/add-new", methods=["GET", "POST"])
+def add_new():
+    """
+
+    """
+
+    jobs = Job.query.filter_by(status=1, deleted=0).all()
+    exporters = Exporter.query.filter_by(status=1, deleted=0).all()
+
+    if request.method == "POST":
+        job_code = request.form["job"]
+
+        if int(job_code) == 0:
+            flash("Please select a job", "warning")
+            return redirect(url_for("add_new"))
+
+        return redirect(url_for("home_targets", job_code=job_code))
+
+    return render_template(
+        "add_new.html",
+        jobs=jobs,
+        exporters=exporters,
+        title="Add New Targets",
+        )
+
+@app.route("/home/create/<int:job_code>", methods=["GET", "POST"])
+def home_targets(job_code: int):
+    """
+
+    """
+
+    job = Job.query.get_or_404(job_code)
+    labels = JobLabel.query.filter_by(
+                            job_code=job_code,
+                            status=1,
+                            deleted=0).all()
+    targets = Target.query.filter_by(
+                            job_code=job_code,
+                            status=1,
+                            deleted=0).all()
+
+    if request.method == "POST":
+
+        read_config = configparser.ConfigParser()
+        read_config.read("configs.ini")
+
+        limit = read_config.get("LICENCES", "targets")
+
+        data = base64.b64decode(limit).decode("UTF-8")
+
+        if len(targets) >= int(data):
+            flash("You have exceeded the limit of targets as per licence", "danger")
+            return redirect(url_for("home_targets", job_code=job_code))
+
+        target_name = request.form["target-name"]
+        check_exists = Target.query.filter_by(
+                            target_name=target_name,
+                            job_code=job_code,
+                            status=1,
+                            deleted=0).all()
+
+        if check_exists:
+
+            flash(f"Target '{target_name}' already exists!", "danger")
+            return redirect(url_for("home_targets", job_code=job_code))
+
+        target = Target(
+                    target_name=target_name,
+                    job_code=job_code)
+
+        db.session.add(target)
+        db.session.commit()
+
+        form_data = dict(request.form)
+        
+        for label in labels:
+
+            label_value = form_data.get(label.label_key)
+
+            new_label = Label(
+                            label_key=label.label_key,
+                            label_value=label_value,
+                            job_code=job_code,
+                            target_code=target.target_code)
+
+            db.session.add(new_label)
+
+        db.session.commit()
+
+        flash("Target and labels successfully added!", "success")
+        return redirect(url_for("home_targets", job_code=job_code))
+
+    return render_template(
+        "home_targets.html",
+        job=job,
+        labels=labels,
+        targets=targets,
+        title="Add Targets",
+        )
+
+@app.route("/home/jobs/update", methods=["POST"])
+def home_jobs_update():
+    """
+
+    """
+
+    if request.method == "POST":
+
+        scrape = request.form["scrape"]
+        job_name = request.form["job_name"]
+        exporter = request.form["exporter"]
+
+        check_exists = Job.query.filter_by(
+                            job_name=job_name,
+                            status=1,
+                            deleted=0).all()
+
+        if check_exists:
+
+            flash(f"Job '{job_name}' already exists!", "danger")
+            return redirect(url_for("add_new"))
+
+        job = Job(
+                job_name=job_name,
+                scrape_interval=scrape,
+                exporter_code=exporter)
+
+        db.session.add(job)
+        db.session.commit()
+
+        flash("Job has been successfully created!", "success")
+        return redirect(url_for("add_new"))
+
+@app.route("/home/labels/update/<int:job_code>", methods=["POST"])
+def home_labels_update(job_code: int):
+    """
+
+    """
+
+    if request.method == "POST":
+
+        label_key = request.form["label-key"]
+
+        check_exists = JobLabel.query.filter_by(
+                                label_key=label_key,
+                                job_code=job_code,
+                                status=1,
+                                deleted=0).all()
+
+        if check_exists:
+            flash(f"Label '{label_key}' already exists!", "danger")
+            return redirect(url_for("home_targets", job_code=job_code))
+
+        label = JobLabel(
+                label_key=label_key,
+                job_code=job_code)
+
+        db.session.add(label)
+        db.session.commit()
+
+        flash("Label successfully added", "success")
+        return redirect(url_for("home_targets", job_code=job_code))
 
 @app.route("/jobs", methods=["GET", "POST"])
 def jobs():
@@ -121,26 +291,13 @@ def jobs():
 
         check_exists = Job.query.filter_by(
                             job_name=job_name,
-                            status=1).all()
+                            status=1,
+                            deleted=0).all()
 
         if check_exists:
 
             flash(f"Job '{job_name}' already exists!", "danger")
-
-            jobs = Job.query.filter_by(status=1).all()
-            exporters = Exporter.query.filter_by(status=1).all()
-            summary = {
-                "all": len(jobs),
-                "active": len(jobs),
-                "inactive": 0,
-            }
-
-            return render_template(
-                        "jobs.html",
-                        jobs=jobs,
-                        title="Jobs",
-                        summary=summary,
-                        exporters=exporters)
+            return redirect(url_for("jobs"))
 
         job = Job(
                 job_name=job_name,
@@ -152,12 +309,14 @@ def jobs():
 
         flash("Job has been successfully created!", "success")
 
-    jobs = Job.query.filter_by(status=1).all()
-    exporters = Exporter.query.filter_by(status=1).all()
+    jobs = Job.query.filter_by(status=1, deleted=0).all()
+    inactive_jobs = Job.query.filter_by(status=0, deleted=0).all()
+    exporters = Exporter.query.filter_by(status=1, deleted=0).all()
+
     summary = {
         "all": len(jobs),
         "active": len(jobs),
-        "inactive": 0,
+        "inactive": len(inactive_jobs),
     }
 
     return render_template(
@@ -247,7 +406,7 @@ def targets():
                 targets=targets)
 
 @app.route("/target/new/<int:job_code>", methods=["GET", "POST"])
-def new_target(job_code):
+def new_target(job_code: int):
 
     job = Job.query.get_or_404(job_code)
     labels = JobLabel.query.filter_by(
@@ -264,7 +423,7 @@ def new_target(job_code):
 
         data = base64.b64decode(limit).decode("UTF-8")
 
-        if int(data) >= len(targets):
+        if len(targets) >= int(data):
             flash("You have exceeded the limit of targets as per licence", "warning")
             return redirect(url_for("targets"))
 
@@ -276,7 +435,7 @@ def new_target(job_code):
 
         if check_exists:
 
-            flash(f"Target '{target_name}' already exists!", "danger")
+            flash(f"Target '{target_name}' already exists!", "warning")
             return render_template(
                         "target.html",
                         job=job,
@@ -315,6 +474,173 @@ def new_target(job_code):
                 job=job,
                 labels=labels,
                 title=f"Add Targets - {job.job_name}",)
+
+@app.route("/target/<int:target_code>/update", methods=["GET", "POST"])
+def update_target(target_code :int):
+    """
+
+    """
+
+    target = Target.query.get_or_404(target_code)
+    labels = Label.query.filter_by(
+                        target_code=target_code,
+                        status=1,
+                        deleted=0).all()
+
+    if request.method == "POST":
+        target_name = request.form["target_name"]
+        check_exists = Target.query.filter_by(
+                            target_name=target_name,
+                            job_code=target.job_code,
+                            status=1,
+                            deleted=0).all()
+
+        if check_exists and target_name != target.target_name:
+
+            flash(f"Target '{target_name}' already exists!", "warning")
+            return redirect(url_for("update_target", target_code=target_code))
+
+        target.target_name = target_name
+        db.session.commit()
+
+        form_data = dict(request.form)
+        
+        for label in labels:
+
+            current_label = Label.query.filter_by(
+                                label_key=label.label_key,
+                                target_code=target_code,
+                                status=1,
+                                deleted=0).first()
+
+            label_value = form_data.get(label.label_key)
+
+            current_label.label_value = label_value
+            db.session.commit()
+
+        flash("Target successfuly updated.", "success")
+        return redirect(url_for("update_target", target_code=target_code))
+
+    return render_template(
+        "update_target.html",
+        title="Update Target",
+        target=target,
+        labels=labels)
+
+@app.route("/target/<int:target_code>/delete", methods=["GET", "POST"])
+def delete_target(target_code: int):
+    """
+
+    """
+
+    target = Target.query.get_or_404(target_code)
+
+    if request.method == "POST":
+        target.status = 0
+        target.deleted = 1
+
+        for label in target.labels:
+            label.status = 0
+            label.deleted = 1
+
+        db.session.commit()
+
+        flash("Target has been successfully deleted!", "danger")
+        return redirect(url_for("index"))
+
+    target.status = 0
+    for label in target.labels:
+        label.status = 0
+
+    db.session.commit()
+
+    flash("Target has been successfully deactivated!", "warning")
+    return redirect(url_for("index"))
+
+@app.route("/job/<int:job_code>/update", methods=["GET", "POST"])
+def update_job(job_code :int):
+    """
+
+    """
+
+    job = Job.query.get_or_404(job_code)
+    labels = JobLabel.query.filter_by(
+                            job_code=job_code,
+                            status=1,
+                            deleted=0).all()
+    targets = Target.query.filter_by(
+                            job_code=job_code,
+                            status=1,
+                            deleted=0).all()
+    exporters = Exporter.query.filter_by(status=1, deleted=0).all()
+
+    if request.method == "POST":
+
+        scrape = request.form["scrape"]
+        job_name = request.form["job_name"]
+        exporter = request.form["exporter"]
+
+        check_exists = Job.query.filter_by(
+                            job_name=job_name,
+                            status=1,
+                            deleted=0).all()
+
+        if check_exists and job_name != job.job_name:
+            flash(f"Job '{job_name}' already exists!", "danger")
+            return redirect(url_for("update_job", job_code=job_code))
+
+        job.job_name = job_name
+        job.scrape_interval = scrape
+        job.exporter_code = exporter
+
+        db.session.commit()
+
+        flash("Job has been successfully updated.", "warning")
+        return redirect(url_for("update_job", job_code=job_code))
+
+    return render_template(
+        "update_job.html",
+        job=job,
+        labels=labels,
+        targets=targets,
+        title="Update Job",
+        exporters=exporters,
+    )
+
+@app.route("/job/<int:job_code>/delete", methods=["GET", "POST"])
+def delete_job(job_code :int):
+    """
+
+    """
+
+    job = Job.query.get_or_404(job_code)
+
+    if request.method == "POST":
+        job.status = 0
+        job.deleted = 1
+
+        for target in job.targets:
+            target.status = 0
+            target.deleted = 1
+        for label in job.labels:
+            label.status = 0
+            label.deleted = 1
+
+        db.session.commit()
+
+        flash("Job has been successfully deleted!", "danger")
+        return redirect(url_for("jobs"))
+
+    job.status = 0
+    for target in job.targets:
+        target.status = 0
+    for label in job.labels:
+        label.status = 0
+
+    db.session.commit()
+
+    flash("Job has been successfully deactivated.", "warning")
+    return redirect(url_for("jobs"))
 
 @app.route("/refresh", methods=["POST"])
 def refresh():
