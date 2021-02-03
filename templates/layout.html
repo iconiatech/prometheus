@@ -16,6 +16,7 @@
     <!-- Custom styles for this template-->
     <link href="{{ url_for('static', filename='css/sb-admin-2.min.css') }}" rel="stylesheet" type="text/css">
     <link href="{{ url_for('static', filename='css/app.min.css') }}" rel="stylesheet" type="text/css">
+    <link href="{{ url_for('static', filename='vendor/datatables/dataTables.bootstrap4.min.css') }}" rel="stylesheet">
 </head>
 <body id="page-top">
 
@@ -49,28 +50,20 @@
     
             <!-- Heading -->
             <div class="sidebar-heading">Menu</div>
+
+            <!-- Nav Item - Add new targets -->
+            <li class="nav-item">
+                <a class="nav-link" href="{{ url_for('add_new') }}" title="Add new targets">
+                    <i class="fas fa-plus"></i>
+                    <span>Add Targets</span>
+                </a>
+            </li>
             
             <!-- Nav Item - Jobs -->
             <li class="nav-item">
-                <a class="nav-link" href="{{ url_for('jobs') }}" title="Jobs">
-                    <i class="fas fa-calendar-alt"></i>
+                <a class="nav-link" href="{{ url_for('jobs') }}" title="Manage Jobs">
+                    <i class="fas fa-laptop-code"></i>
                     <span>Jobs</span>
-                </a>
-            </li>
-
-            <!-- Nav Item - Labels -->
-            <li class="nav-item">
-                <a class="nav-link" href="{{ url_for('labels') }}" title="Labels">
-                    <i class="fas fa-calendar-alt"></i>
-                    <span>Labels</span>
-                </a>
-            </li>
-    
-            <!-- Nav Item - Targets -->
-            <li class="nav-item">
-                <a class="nav-link" href="{{ url_for('targets') }}" title="Targets">
-                    <i class="fas fa-calendar-alt"></i>
-                    <span>Targets</span>
                 </a>
             </li>
     
@@ -118,7 +111,7 @@
                 <!-- Nav Item - User Information -->
                 <li class="nav-item dropdown no-arrow">
                     <a class="nav-link dropdown-toggle" href="#" id="userDropdown" role="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
-                    <span class="mr-2 d-none d-lg-inline text-gray-600 small">Valerie Luna</span>
+                    <span class="mr-2 d-none d-lg-inline text-gray-600 small">Username</span>
                     <img class="img-profile rounded-circle" src="https://source.unsplash.com/QAB-WJcbgJk/60x60">
                     </a>
                     <!-- Dropdown - User Information -->
@@ -153,6 +146,9 @@
                         {% if messages %}
                             {% for category, message in messages %}
                                 <div class="alert alert-{{ category }}">
+                                    <button type="button" class="close" data-dismiss="alert" aria-label="Close">
+                                        <span aria-hidden="true">&times;</span>
+                                    </button>
                                     {{ message }}
                                 </div>
                             {% endfor %}
@@ -200,5 +196,15 @@
 
     <!-- Custom scripts for all pages-->
     <script src="{{ url_for('static', filename='js/sb-admin-2.min.js') }}"></script>
+    <script src="{{ url_for('static', filename='js/vendor.min.js') }}"></script>
+    <script src="{{ url_for('static', filename='js/app.min.js') }}"></script>
+
+    <!-- Page level plugins -->
+    <script src="{{ url_for('static', filename='vendor/datatables/jquery.dataTables.min.js') }}"></script>
+    <script src="{{ url_for('static', filename='vendor/datatables/dataTables.bootstrap4.min.js') }}"></script>
+
+    <!-- Page level custom scripts -->
+    <script src="{{ url_for('static', filename='js/demo/datatables-demo.js') }}"></script>
+
 </body>
 </html>
