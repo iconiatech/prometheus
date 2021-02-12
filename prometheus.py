@@ -691,8 +691,8 @@ def refresh():
         for job in jobs:
 
             job_name = job.job_name
-            job_exporter = job.exporter.exporter_name
             relabel_port = job.exporter.relabel_port
+            job_exporter = job.exporter.exporter_name
             scrape_interval = f"{job.scrape_interval}s"
 
             job_targets = job.targets
@@ -700,16 +700,16 @@ def refresh():
 
             job_config = {
                 "job_name": job_name,
-                "scrape_interval": scrape_interval,
+                "job_labels": job_labels,
+                "job_targets": job_targets,
                 "job_exporter": job_exporter,
                 "relabel_port": relabel_port,
-                "job_targets": job_targets,
-                "job_labels": job_labels,
+                "scrape_interval": scrape_interval,
             }
 
             if job.exporter.exporter_metric_path:
                 metrics_path = job.exporter.exporter_metric_path
-
+ 
                 job_config.update(metrics_path=metrics_path)
 
             if job.exporter.exporter_module:
@@ -732,10 +732,15 @@ def refresh():
                 current_config.update(metrics_path=metrics_path)
 
             if "module" in job:
-                module = str(module)
+                curr_jb = Job.query.filter_by(
+                            job_name=job["job_name"],
+                            status=1,
+                            deleted=0).first()
+
+                module = curr_jb.exporter.exporter_module
 
                 params = {
-                    "module": [module]
+                    "module": [str(module)]
                 }
 
                 current_config.update(params=params)
