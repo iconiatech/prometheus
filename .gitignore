@@ -1,5 +1,6 @@
 # Folders
 /venv
+/.dbdata
 /__pycache__
 
 # Files
