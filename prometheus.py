@@ -24,7 +24,7 @@ from flask_login import (
 
 app = Flask(__name__)
 app.config["SECRET_KEY"] = "5791fcasxth5899863986498hggshdf"
-app.config["SQLALCHEMY_DATABASE_URI"] = "postgresql+psycopg2://postgres:postgres@localhost/prometheus"
+app.config["SQLALCHEMY_DATABASE_URI"] = "postgresql+psycopg2://postgres:postgres@db/postgres"
 app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
 
 db = SQLAlchemy(app=app)
