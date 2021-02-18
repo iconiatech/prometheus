@@ -1,0 +1,51 @@
+[
+    {
+        "name": "node_exporter",
+        "desc": "Linux Machines",
+        "metric": "",
+        "module": "",
+        "port": 9182
+    },
+    {
+        "name": "windows_exporter",
+        "desc": "Windows Machines",
+        "metric": "",
+        "module": "",
+        "port": 9182
+    },
+    {
+        "name": "snmp_expoter",
+        "desc": "Printers",
+        "metric": "snmp",
+        "module": "Printers",
+        "port": 9116
+    },
+    {
+        "name": "http_probes",
+        "desc": "HTTP Probes",
+        "metric": "probe",
+        "module": "http_2xx",
+        "port": 9115
+    },
+    {
+        "name": "blackbox_processes",
+        "desc": "Blackbox Processes",
+        "metric": "probe",
+        "module": "tcp_connect",
+        "port": 9115
+    },
+    {
+        "name": "NetDev",
+        "desc": "Net Dev",
+        "metric": "snmp",
+        "module": "NetDev",
+        "port": 9116
+    },
+    {
+        "name": "access-control",
+        "desc": "Access Control",
+        "metric": "probe",
+        "module": "icmp",
+        "port": 9115
+    }
+]
