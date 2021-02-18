@@ -1,5 +1,6 @@
 import sys
 import yaml
+import json
 import base64
 import configparser
 
@@ -11,7 +12,15 @@ from flask import (
     url_for,
     redirect,
     render_template)
+from flask_bcrypt import Bcrypt
 from flask_sqlalchemy import SQLAlchemy
+from flask_login import (
+            LoginManager,
+            UserMixin,
+            login_user,
+            current_user,
+            logout_user,
+            login_required)
 
 app = Flask(__name__)
 app.config["SECRET_KEY"] = "5791fcasxth5899863986498hggshdf"
@@ -19,6 +28,29 @@ app.config["SQLALCHEMY_DATABASE_URI"] = "postgresql+psycopg2://postgres:postgres
 app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
 
 db = SQLAlchemy(app=app)
+bcrypt = Bcrypt(app=app)
+login_manager = LoginManager(app=app)
+login_manager.login_view = "login"
+login_manager.login_message_category = "warning"
+
+
+class User(db.Model, UserMixin):
+    """
+
+    """
+
+    user_id = db.Column(db.Integer, primary_key=True)
+    password = db.Column(db.String(), nullable=False)
+    email = db.Column(db.String(100), nullable=False, unique=True)
+    username = db.Column(db.String(100), nullable=False, unique=True)
+    status = db.Column(db.Integer, nullable=False, default=1)
+    deleted = db.Column(db.Integer, nullable=False, default=0)
+    suspended = db.Column(db.Integer, nullable=False, default=0)
+    created_at = db.Column(db.DateTime, nullable=False, default=datetime.utcnow)
+
+    def get_id(self):
+        return (self.user_id)
+
 
 class Exporter(db.Model):
 
@@ -94,8 +126,128 @@ class Target(db.Model):
         return f"Target '{self.target_name}'"
 
 
+@login_manager.user_loader
+def load_user(user_id):
+    """
+
+    """
+
+    return User.query.get(int(user_id))
+
+@app.before_first_request
+def initialize_requirements():
+    """
+
+    """
+
+    try:
+
+        db.create_all()
+        exporters = Exporter.query.filter_by().all()
+
+        with open("./exporters.json") as f:
+            data = json.load(f)
+
+            if not exporters:
+                for row in data:
+                    exporter = Exporter(
+                                relabel_port=row["port"],
+                                exporter_name=row["name"],
+                                exporter_module=row["module"],
+                                exporter_description=row["desc"],
+                                exporter_metric_path=row["metric"])
+
+                    db.session.add(exporter)
+                    db.session.commit()
+
+    except Exception as error:
+        print(error)
+
+@app.route("/register", methods=["GET", "POST"])
+def register():
+    """
+
+    """
+
+    if current_user.is_authenticated:
+        return redirect(url_for("index"))
+
+    if request.method == "POST":
+
+        error = ""
+
+        email = request.form["email"]
+        username = request.form["username"]
+        password = request.form["password"]
+
+        user = User.query.filter_by(username=username).first()
+
+        if user:
+            error = "Username already taken!"
+
+        user = User.query.filter_by(email=email).first()
+
+        if user:
+            error = "Email already in use!"
+
+        if error:
+            flash(error, "danger")
+            return redirect(url_for("register"))
+
+        hashed_password = bcrypt.generate_password_hash(
+                                    password).decode("utf-8")
+
+        user = User(
+                email=email, 
+                username=username, 
+                password=hashed_password)
+
+        db.session.add(user)
+        db.session.commit()
+
+        flash("Your account has been created. You are now able to login", "success")
+        return redirect(url_for("login"))
+
+    return render_template("register.html", title="Register")
+
+@app.route("/login", methods=["GET", "POST"])
+def login():
+    """
+
+    """
+
+    if current_user.is_authenticated:
+        return redirect(url_for("index"))
+
+    if request.method == "POST":
+        email = request.form["email"]
+        password = request.form["password"]
+
+        user = User.query.filter_by(email=email).first()
+
+        if user and bcrypt.check_password_hash(user.password, password):
+            login_user(user)
+
+            next_page = request.args.get("next")
+            flash("Login Successful. Welcome Back!", "success")
+            return redirect(next_page) if next_page else redirect(url_for("index"))
+
+        flash("Login Unsuccessful. Please check email and password.", "danger")
+
+    return render_template("login.html" , title="Login")
+
+@app.route("/logout")
+def logout():
+    """
+
+    """
+
+    logout_user()
+    return redirect(url_for("index"))
+
 @app.route("/")
 @app.route("/home", methods=["GET"])
+@login_required
 def index():
     """
 
@@ -118,6 +270,7 @@ def index():
         summary=summary,)
 
 @app.route("/add-new", methods=["GET", "POST"])
+@login_required
 def add_new():
     """
 
@@ -143,6 +296,7 @@ def add_new():
         )
 
 @app.route("/home/create/<int:job_code>", methods=["GET", "POST"])
+@login_required
 def home_targets(job_code: int):
     """
 
@@ -218,6 +372,7 @@ def home_targets(job_code: int):
         )
 
 @app.route("/home/jobs/update", methods=["POST"])
+@login_required
 def home_jobs_update():
     """
 
@@ -251,6 +406,7 @@ def home_jobs_update():
         return redirect(url_for("add_new"))
 
 @app.route("/home/labels/update/<int:job_code>", methods=["POST"])
+@login_required
 def home_labels_update(job_code: int):
     """
 
@@ -281,6 +437,7 @@ def home_labels_update(job_code: int):
         return redirect(url_for("home_targets", job_code=job_code))
 
 @app.route("/jobs", methods=["GET", "POST"])
+@login_required
 def jobs():
 
     if request.method == "POST":
@@ -327,6 +484,7 @@ def jobs():
                 exporters=exporters)
 
 @app.route("/labels", methods=["GET", "POST"])
+@login_required
 def labels():
 
     jobs = Job.query.filter_by(status=1).all()
@@ -382,6 +540,7 @@ def labels():
                 labels=labels)
 
 @app.route("/targets", methods=["GET", "POST"])
+@login_required
 def targets():
 
     if request.method == "POST":
@@ -406,6 +565,7 @@ def targets():
                 targets=targets)
 
 @app.route("/target/new/<int:job_code>", methods=["GET", "POST"])
+@login_required
 def new_target(job_code: int):
 
     job = Job.query.get_or_404(job_code)
@@ -476,6 +636,7 @@ def new_target(job_code: int):
                 title=f"Add Targets - {job.job_name}",)
 
 @app.route("/target/<int:target_code>/update", methods=["GET", "POST"])
+@login_required
 def update_target(target_code :int):
     """
 
@@ -528,6 +689,7 @@ def update_target(target_code :int):
         labels=labels)
 
 @app.route("/target/<int:target_code>/delete", methods=["GET", "POST"])
+@login_required
 def delete_target(target_code: int):
     """
 
@@ -558,6 +720,7 @@ def delete_target(target_code: int):
     return redirect(url_for("index"))
 
 @app.route("/job/<int:job_code>/update", methods=["GET", "POST"])
+@login_required
 def update_job(job_code :int):
     """
 
@@ -608,6 +771,7 @@ def update_job(job_code :int):
     )
 
 @app.route("/job/<int:job_code>/delete", methods=["GET", "POST"])
+@login_required
 def delete_job(job_code :int):
     """
 
@@ -643,6 +807,7 @@ def delete_job(job_code :int):
     return redirect(url_for("jobs"))
 
 @app.route("/refresh", methods=["POST"])
+@login_required
 def refresh():
 
     configs = {}
