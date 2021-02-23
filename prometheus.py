@@ -385,9 +385,7 @@ def home_jobs_update():
         exporter = request.form["exporter"]
 
         check_exists = Job.query.filter_by(
-                            job_name=job_name,
-                            status=1,
-                            deleted=0).all()
+                            job_name=job_name).all()
 
         if check_exists:
 
@@ -418,9 +416,7 @@ def home_labels_update(job_code: int):
 
         check_exists = JobLabel.query.filter_by(
                                 label_key=label_key,
-                                job_code=job_code,
-                                status=1,
-                                deleted=0).all()
+                                job_code=job_code).all()
 
         if check_exists:
             flash(f"Label '{label_key}' already exists!", "danger")
@@ -447,9 +443,7 @@ def jobs():
         exporter = request.form["exporter"]
 
         check_exists = Job.query.filter_by(
-                            job_name=job_name,
-                            status=1,
-                            deleted=0).all()
+                            job_name=job_name).all()
 
         if check_exists:
 
@@ -502,8 +496,7 @@ def labels():
 
         check_exists = JobLabel.query.filter_by(
                                 label_key=label_key,
-                                job_code=job_code,
-                                status=1).all()
+                                job_code=job_code).all()
 
         if check_exists:
             flash(f"Label '{label_key}' already exists!", "danger")
