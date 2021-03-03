@@ -7,7 +7,9 @@ services:
       context: .
       dockerfile: Dockerfile
     ports:
-      - 5000:5000
+      - 4000:5000
+    volumes:
+      - /opt/prometheus/prometheus.yml:/usr/src/app/prometheus.yml
     depends_on:
       - db
 
@@ -17,6 +19,9 @@ services:
     environment:
       POSTGRES_PASSWORD: postgres
     volumes:
-      - .dbdata:/var/lib/postgresql
+      - prom-db:/var/lib/postgresql
     ports:
       - 5435:5432
+
+volumes: 
+  prom-db:
