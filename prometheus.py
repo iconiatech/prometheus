@@ -2,6 +2,7 @@ import sys
 import yaml
 import json
 import base64
+import requests
 import configparser
 
 from datetime import datetime
@@ -942,10 +943,31 @@ def refresh():
             
             configs["scrape_configs"].append(current_config)
 
+    message = ""
+    category = ""
+
     with open("prometheus.yml", "w") as f:
         yaml.dump(configs, f, sort_keys=False)
 
-    flash("Server successfully refreshed!", "success")
+    try:
+
+        read_config = configparser.ConfigParser()
+        read_config.read("configs.ini")
+        hostname = read_config.get("SERVER", "hostname")
+
+        headers = {}
+        url = f"{hostname}/-/reload"
+
+        requests.post(url=url, headers=headers)
+
+        category = "success"
+        message = "Server successfully refreshed!"
+
+    except requests.exceptions.ConnectionError as error:
+        category = "danger"
+        message = "Could not connect to the server! Please restart manually."
+
+    flash(message=message, category=category)
     return redirect(url_for("index"))
 
 if __name__ == "__main__":
