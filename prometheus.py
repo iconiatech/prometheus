@@ -946,10 +946,21 @@ def refresh():
     message = ""
     category = ""
 
-    with open("prometheus.yml", "w") as f:
-        yaml.dump(configs, f, sort_keys=False)
+    # current date and time
+    now = datetime.now()
+    current_time = now.strftime("%m-%d-%Y%H:%M:%S")
+    new_file = f"prometheus-{current_time}.yml"
 
     try:
+
+        with open("prometheus.yml") as file:
+            documents = yaml.full_load(file)
+
+        with open(new_file, "w") as file:
+            yaml.dump(documents, file, sort_keys=False)
+
+        with open("prometheus.yml", "w") as file:
+            yaml.dump(configs, file, sort_keys=False)
 
         read_config = configparser.ConfigParser()
         read_config.read("configs.ini")
@@ -963,9 +974,15 @@ def refresh():
         category = "success"
         message = "Server successfully refreshed!"
 
+    except requests.exceptions.MissingSchema as error:
+        category = "danger"
+        message = "Invalid server url provided!"
     except requests.exceptions.ConnectionError as error:
         category = "danger"
         message = "Could not connect to the server! Please restart manually."
+    except Exception as error:
+        category = "danger"
+        message = "An error occured while refreshing. Please try again later!"
 
     flash(message=message, category=category)
     return redirect(url_for("index"))
