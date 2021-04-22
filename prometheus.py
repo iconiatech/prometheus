@@ -924,22 +924,22 @@ def refresh():
 
                 current_config["static_configs"].append(target_config)
 
-                relabel_configs = [
-                        {
-                            "source_labels": ["__address__"], 
-                            "target_label": "__param_target"
-                        }, 
-                        {
-                            "source_labels": ["__param_target"], 
-                            "target_label": "instance"
-                        }, 
-                        {
-                            "target_label": "__address__", 
-                            "replacement": f"127.0.0.1:{job['relabel_port']}"
-                        }
-                ]
+                # relabel_configs = [
+                #         {
+                #             "source_labels": ["__address__"], 
+                #             "target_label": "__param_target"
+                #         }, 
+                #         {
+                #             "source_labels": ["__param_target"], 
+                #             "target_label": "instance"
+                #         }, 
+                #         {
+                #             "target_label": "__address__", 
+                #             "replacement": f"127.0.0.1:{job['relabel_port']}"
+                #         }
+                # ]
 
-                current_config.update(relabel_configs=relabel_configs)
+                # current_config.update(relabel_configs=relabel_configs)
             
             configs["scrape_configs"].append(current_config)
 
