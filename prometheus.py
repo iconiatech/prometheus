@@ -908,39 +908,41 @@ def refresh():
 
             for target in job["job_targets"]:
 
-                target_config = {
-                    "targets": [target.target_name],
-                    "labels": {},
-                }
+                if target.status == 1:
 
-                for label in target.labels:
+                    target_config = {
+                        "targets": [target.target_name],
+                        "labels": {},
+                    }
 
-                    key = label.label_key
-                    value = label.label_value
+                    for label in target.labels:
 
-                    curr_label = { key: value }
+                        key = label.label_key
+                        value = label.label_value
 
-                    target_config["labels"].update(curr_label)
+                        curr_label = { key: value }
 
-                current_config["static_configs"].append(target_config)
+                        target_config["labels"].update(curr_label)
 
-                relabel_configs = [
-                        {
-                            "source_labels": ["__address__"], 
-                            "target_label": "__param_target"
-                        }, 
-                        {
-                            "source_labels": ["__param_target"], 
-                            "target_label": "instance"
-                        }, 
-                        {
-                            "target_label": "__address__", 
-                            "replacement": f"127.0.0.1:{job['relabel_port']}"
-                        }
-                ]
+                    current_config["static_configs"].append(target_config)
 
-                if int(job["relabel_port"]) in [9115, 9116]:
-                    current_config.update(relabel_configs=relabel_configs)
+                    relabel_configs = [
+                            {
+                                "source_labels": ["__address__"], 
+                                "target_label": "__param_target"
+                            }, 
+                            {
+                                "source_labels": ["__param_target"], 
+                                "target_label": "instance"
+                            }, 
+                            {
+                                "target_label": "__address__", 
+                                "replacement": f"127.0.0.1:{job['relabel_port']}"
+                            }
+                    ]
+
+                    if int(job["relabel_port"]) in [9115, 9116]:
+                        current_config.update(relabel_configs=relabel_configs)
             
             configs["scrape_configs"].append(current_config)
 
